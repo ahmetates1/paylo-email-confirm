@@ -20,16 +20,16 @@
   </style>
 </head>
 <body>
-  <h1>Paylo – Set new password</h1>
+  <h1 id="title">Paylo – Set new password</h1>
   <div id="status">Verifying your link…</div>
   <div id="message"></div>
   <div id="form-container" style="display: none;">
-    <p class="muted">Enter your new password below. You will then sign in to the Paylo app with this password.</p>
+    <p class="muted" id="form-desc"></p>
     <form id="password-form">
-      <label for="new-password">New password</label>
+      <label for="new-password" id="label-password">New password</label>
       <input type="password" id="new-password" name="newPassword" minlength="6" autocomplete="new-password" required />
       <div id="err-password" class="form-errors"></div>
-      <label for="confirm-password">Confirm password</label>
+      <label for="confirm-password" id="label-confirm">Confirm password</label>
       <input type="password" id="confirm-password" name="confirmPassword" autocomplete="new-password" required />
       <div id="err-confirm" class="form-errors"></div>
       <button type="submit" id="submit-btn">Set new password</button>
@@ -37,80 +37,138 @@
   </div>
 
   <script>
-    (async function () {
-      const SUPABASE_URL = 'https://rgwbkymosmhwwawuzblg.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnd2JreW1vc21od3dhd3V6YmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NjA4MDcsImV4cCI6MjA3OTUzNjgwN30.7n9mp_YH32CfOII3yFdadRTUCDh-ljJL5eh2fM44NLY';
+    (function () {
+      var lang = (navigator.language || navigator.userLanguage || '').toLowerCase().startsWith('tr') ? 'tr' : 'en';
+      var i18n = {
+        tr: {
+          title: 'Paylo – Yeni şifre oluştur',
+          verifying: 'Bağlantı doğrulanıyor…',
+          config: 'Yapılandırma gerekli',
+          configMsg: 'index.html dosyasında SUPABASE_URL ve SUPABASE_ANON_KEY değerlerini ayarlayın.',
+          invalid: 'Geçersiz veya süresi dolmuş bağlantı',
+          invalidMsg: 'Bu bağlantı geçersiz veya süresi dolmuş. Paylo uygulamasından tekrar şifre sıfırlama isteyin.',
+          error: 'Bir hata oluştu',
+          errorMsg: 'Lütfen tekrar deneyin veya uygulamadan yeni sıfırlama bağlantısı isteyin.',
+          setPassword: 'Yeni şifrenizi belirleyin',
+          formDesc: 'Yeni şifrenizi aşağıya girin. Ardından Paylo uygulamasına bu şifre ile giriş yapabilirsiniz.',
+          newPassword: 'Yeni şifre',
+          confirmPassword: 'Şifreyi onayla',
+          submit: 'Şifreyi güncelle',
+          passwordShort: 'Şifre en az 6 karakter olmalıdır',
+          passwordsMismatch: 'Şifreler eşleşmiyor',
+          updated: 'Şifre güncellendi',
+          success: 'Şifreniz güncellendi. Paylo uygulamasını açıp yeni şifrenizle giriş yapabilirsiniz.',
+          openApp: 'Paylo uygulamasını aç',
+          manual: 'Veya uygulamayı manuel açıp e-posta ve yeni şifrenizle giriş yapın.',
+          updateFailed: 'Güncelleme başarısız. Lütfen tekrar deneyin.'
+        },
+        en: {
+          title: 'Paylo – Set new password',
+          verifying: 'Verifying your link…',
+          config: 'Configuration needed',
+          configMsg: 'Set SUPABASE_URL and SUPABASE_ANON_KEY in index.html (see README).',
+          invalid: 'Invalid or expired link',
+          invalidMsg: 'This link is invalid or has expired. Request a new password reset from the Paylo app.',
+          error: 'Something went wrong',
+          errorMsg: 'Please try again or request a new reset link from the app.',
+          setPassword: 'Set your new password',
+          formDesc: 'Enter your new password below. You will then sign in to the Paylo app with this password.',
+          newPassword: 'New password',
+          confirmPassword: 'Confirm password',
+          submit: 'Set new password',
+          passwordShort: 'Password must be at least 6 characters',
+          passwordsMismatch: 'Passwords do not match',
+          updated: 'Password updated',
+          success: 'Your password has been updated. You can open the Paylo app and sign in with your new password.',
+          openApp: 'Open Paylo app',
+          manual: 'Or open the app manually and log in with your email and new password.',
+          updateFailed: 'Update failed. Please try again.'
+        }
+      };
+      var t = i18n[lang];
 
-      if (SUPABASE_URL === 'https://rgwbkymosmhwwawuzblg.supabase.co' || SUPABASE_ANON_KEY === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnd2JreW1vc21od3dhd3V6YmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NjA4MDcsImV4cCI6MjA3OTUzNjgwN30.7n9mp_YH32CfOII3yFdadRTUCDh-ljJL5eh2fM44NLY') {
-        document.getElementById('status').textContent = 'Configuration needed';
-        document.getElementById('message').innerHTML = '<div class="message error">Set SUPABASE_URL and SUPABASE_ANON_KEY in index.html (see README).</div>';
-        return;
-      }
+      document.getElementById('title').textContent = t.title;
+      document.getElementById('status').textContent = t.verifying;
+      document.getElementById('form-desc').textContent = t.formDesc;
+      document.getElementById('label-password').textContent = t.newPassword;
+      document.getElementById('label-confirm').textContent = t.confirmPassword;
+      document.getElementById('submit-btn').textContent = t.submit;
 
-      const hash = window.location.hash?.slice(1) || '';
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      const type = params.get('type');
+      (async function () {
+        var SUPABASE_URL = 'https://rgwbkymosmhwwawuzblg.supabase.co';
+        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnd2JreW1vc21od3dhd3V6YmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NjA4MDcsImV4cCI6MjA3OTUzNjgwN30.7n9mp_YH32CfOII3yFdadRTUCDh-ljJL5eh2fM44NLY';
 
-      if (!accessToken || !refreshToken || type !== 'recovery') {
-        document.getElementById('status').textContent = 'Invalid or expired link';
-        document.getElementById('message').innerHTML = '<div class="message error">This link is invalid or has expired. Request a new password reset from the Paylo app.</div>';
-        return;
-      }
-
-      let supabase;
-      try {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-        if (error) throw error;
-      } catch (err) {
-        console.error(err);
-        document.getElementById('status').textContent = 'Something went wrong';
-        document.getElementById('message').innerHTML = '<div class="message error">' + (err.message || 'Please try again or request a new reset link from the app.') + '</div>';
-        return;
-      }
-
-      document.getElementById('status').textContent = 'Set your new password';
-      document.getElementById('form-container').style.display = 'block';
-
-      document.getElementById('password-form').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const newPassword = document.getElementById('new-password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-        const errPassword = document.getElementById('err-password');
-        const errConfirm = document.getElementById('err-confirm');
-        const btn = document.getElementById('submit-btn');
-
-        errPassword.textContent = '';
-        errConfirm.textContent = '';
-        if (newPassword.length < 6) {
-          errPassword.textContent = 'Password must be at least 6 characters';
+        if (!SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.indexOf('YOUR_') !== -1 || SUPABASE_ANON_KEY.indexOf('YOUR_') !== -1) {
+          document.getElementById('status').textContent = t.config;
+          document.getElementById('message').innerHTML = '<div class="message error">' + t.configMsg + '</div>';
           return;
         }
-        if (newPassword !== confirmPassword) {
-          errConfirm.textContent = 'Passwords do not match';
+
+        var hash = window.location.hash ? window.location.hash.slice(1) : '';
+        var params = new URLSearchParams(hash);
+        var accessToken = params.get('access_token');
+        var refreshToken = params.get('refresh_token');
+        var type = params.get('type');
+
+        if (!accessToken || !refreshToken || type !== 'recovery') {
+          document.getElementById('status').textContent = t.invalid;
+          document.getElementById('message').innerHTML = '<div class="message error">' + t.invalidMsg + '</div>';
           return;
         }
 
-        btn.disabled = true;
+        var supabase;
         try {
-          const { error } = await supabase.auth.updateUser({ password: newPassword });
-          if (error) throw error;
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
-          document.getElementById('form-container').style.display = 'none';
-          document.getElementById('status').textContent = 'Password updated';
-          document.getElementById('message').innerHTML =
-            '<div class="message success">Your password has been updated. You can open the Paylo app and sign in with your new password.</div>' +
-            '<p><a href="paylo://" class="app-link">Open Paylo app</a></p>' +
-            '<p class="muted">Or open the app manually and log in with your email and new password.</p>';
+          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          var sessionResult = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          if (sessionResult.error) throw sessionResult.error;
         } catch (err) {
           console.error(err);
-          errPassword.textContent = err.message || 'Update failed. Please try again.';
-        } finally {
-          btn.disabled = false;
+          document.getElementById('status').textContent = t.error;
+          document.getElementById('message').innerHTML = '<div class="message error">' + (err.message || t.errorMsg) + '</div>';
+          return;
         }
-      });
+
+        document.getElementById('status').textContent = t.setPassword;
+        document.getElementById('form-container').style.display = 'block';
+
+        document.getElementById('password-form').addEventListener('submit', async function (e) {
+          e.preventDefault();
+          var newPassword = document.getElementById('new-password').value;
+          var confirmPassword = document.getElementById('confirm-password').value;
+          var errPassword = document.getElementById('err-password');
+          var errConfirm = document.getElementById('err-confirm');
+          var btn = document.getElementById('submit-btn');
+
+          errPassword.textContent = '';
+          errConfirm.textContent = '';
+          if (newPassword.length < 6) {
+            errPassword.textContent = t.passwordShort;
+            return;
+          }
+          if (newPassword !== confirmPassword) {
+            errConfirm.textContent = t.passwordsMismatch;
+            return;
+          }
+
+          btn.disabled = true;
+          try {
+            var updateResult = await supabase.auth.updateUser({ password: newPassword });
+            if (updateResult.error) throw updateResult.error;
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            document.getElementById('form-container').style.display = 'none';
+            document.getElementById('status').textContent = t.updated;
+            document.getElementById('message').innerHTML =
+              '<div class="message success">' + t.success + '</div>' +
+              '<p><a href="paylo://" class="app-link">' + t.openApp + '</a></p>' +
+              '<p class="muted">' + t.manual + '</p>';
+          } catch (err) {
+            console.error(err);
+            errPassword.textContent = err.message || t.updateFailed;
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      })();
     })();
   </script>
 </body>
