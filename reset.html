@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paylo – Password reset</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 480px; margin: 2rem auto; padding: 0 1rem; }
+    .message { padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+    .success { background: #d4edda; color: #155724; }
+    .error { background: #f8d7da; color: #721c24; }
+    .muted { color: #6c757d; font-size: 0.9rem; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Paylo – Password reset</h1>
+  <div id="status">Verifying your email…</div>
+  <div id="message"></div>
+
+  <script>
+    (async function () {
+      // Nereden alacaksın: Paylo projesindeki .env dosyasındaki aynı değerler (veya Supabase Dashboard > Project Settings > API).
+      const SUPABASE_URL = 'https://rgwbkymosmhwwawuzblg.supabase.co';       // .env'deki SUPABASE_URL (örn. https://xxxx.supabase.co)
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnd2JreW1vc21od3dhd3V6YmxnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM5NjA4MDcsImV4cCI6MjA3OTUzNjgwN30.7n9mp_YH32CfOII3yFdadRTUCDh-ljJL5eh2fM44NLY';  // .env'deki SUPABASE_ANON_KEY (anon public key)
+
+      if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+        document.getElementById('status').textContent = 'Configuration needed';
+        document.getElementById('message').innerHTML = '<div class="message error">Set SUPABASE_URL and SUPABASE_ANON_KEY in index.html (see README).</div>';
+        return;
+      }
+
+      const hash = window.location.hash?.slice(1) || '';
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get('access_token');
+      const refreshToken = params.get('refresh_token');
+      const type = params.get('type');
+
+      if (!accessToken || !refreshToken || type !== 'recovery') {
+        document.getElementById('status').textContent = 'Invalid or expired link';
+        document.getElementById('message').innerHTML = '<div class="message error">This link is invalid or has expired. Request a new password reset from the Paylo app.</div>';
+        return;
+      }
+
+      try {
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const { data, error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (error) throw error;
+
+        const userId = data?.user?.id;
+        if (userId) {
+          await supabase.from('users').update({ pending_password_reset: true }).eq('id', userId);
+        }
+
+        document.getElementById('status').textContent = 'Email verified';
+        document.getElementById('message').innerHTML =
+          '<div class="message success">' +
+          'You can now set your new password in the Paylo app. Open the app, sign in with your email, and you will be asked to enter a new password.' +
+          '</div>' +
+          '<p class="muted">You can close this page.</p>';
+        // Clear hash so refreshing doesn’t re-use the token
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('status').textContent = 'Something went wrong';
+        document.getElementById('message').innerHTML = '<div class="message error">' + (err.message || 'Please try again or request a new reset link from the app.') + '</div>';
+      }
+    })();
+  </script>
+</body>
+</html>
